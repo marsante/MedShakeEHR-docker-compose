@@ -1,0 +1,17 @@
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+/.env
+#/config/*
+/data/*
+/logs/*
+/ehr/*
+/config/cert/*
