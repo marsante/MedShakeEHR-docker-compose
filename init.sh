@@ -1,5 +1,6 @@
 #! /bin/bash
 # gen cert
+mkdir cert
 openssl genrsa -out config/cert/localhost.key 4096
 openssl req -new -key config/cert/localhost.key -out config/cert/localhost.csr
 openssl x509 -req -days 3650 -in config/cert/localhost.csr -signkey config/cert/localhost.key -out config/cert/localhost.pem
@@ -19,5 +20,7 @@ sed -i "1iSetEnv MEDSHAKEEHRPATH /app/ehr" ehr/public_html/.htaccess
 
 rm -r $vRelease.zip MedShakeEHR-base-$version
 
-docker-compose up --build
+mkdir -p logs{apache2,mysql} data/{mysql,orthanc}
+
+sudo docker-compose up --build
 
