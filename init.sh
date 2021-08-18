@@ -1,6 +1,6 @@
 #! /bin/bash
 # gen cert
-mkdir cert
+mkdir config/cert
 openssl genrsa -out config/cert/localhost.key 4096
 openssl req -new -key config/cert/localhost.key -out config/cert/localhost.csr
 openssl x509 -req -days 3650 -in config/cert/localhost.csr -signkey config/cert/localhost.key -out config/cert/localhost.pem
@@ -8,7 +8,7 @@ openssl x509 -req -days 3650 -in config/cert/localhost.csr -signkey config/cert/
 vRelease=$(curl --silent "https://api.github.com/repos/MedShake/MedShakeEHR-base/releases/latest" |
         grep '"tag_name":' |                                                          
         sed -E 's/.*"([^"]+)".*/\1/')
-wget --no-check-certificate https://github.com/MedShake/MedShakeEHR-base/archive/$vRelease.zip -P 
+wget --no-check-certificate https://github.com/MedShake/MedShakeEHR-base/archive/$vRelease.zip
 unzip $vRelease.zip  
 version=$(echo $vRelease | cut -f2 -d "v")  
 

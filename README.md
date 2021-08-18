@@ -18,8 +18,5 @@ cd MedShakeEHR-dockerCompose/
 cp sample.env .env
 nano .env
 ```
-* Lancez une première fois le script shell ``` docker-compose up --build ```
-
-* Après vous pouvez utiliser les commandes classiques de docker-compose
-
+* Lancez une première fois le script shell ``` init.sh ```
 * Tapez localhost dans votre navigateur
