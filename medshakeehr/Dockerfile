@@ -1,3 +1,4 @@
+# https://hub.docker.com/_/php
 FROM php:7.4-apache
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -44,6 +45,6 @@ ARG GROUP_ID
 ARG USER_NAME
 
 RUN groupadd -f -g $GROUP_ID $USER_NAME && \
-    useradd -u $USER_ID -g $GROUP_ID $USER_NAME
+useradd -u $USER_ID -g $GROUP_ID $USER_NAME
 
 USER ${USER_NAME}
