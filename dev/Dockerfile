@@ -1,8 +1,22 @@
+# https://hub.docker.com/_/composer
+FROM composer:2.0 as build
+ENV VRELEASE master
+RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
+tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
+WORKDIR /var/www/html/
+RUN composer install -o --ignore-platform-req php && cd public_html && composer install -o
+COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
+
 # https://hub.docker.com/_/php
-FROM php:7.4-apache
-
+FROM php:8.0-apache
+ENV PHP_MEMORY_LIMIT 512M
+ENV PHP_UPLOAD_LIMIT 512M
+ENV PHPSTAGE development
+WORKDIR /var/www/html/
+COPY --from=build --chown=www-data:www-data /var/www/html ./
+COPY --chown=1000:1000 config/vhost-docker /etc/apache2/sites-enabled/000-default.conf
+COPY msehr.entrypoint /usr/local/bin/
 ARG DEBIAN_FRONTEND=noninteractive
-
 RUN set -ex; \
     \
     apt-get update; \
@@ -14,18 +28,12 @@ RUN set -ex; \
         pdftk \
     ; \
     rm -rf /var/lib/apt/lists/*
-
-ENV PHP_MEMORY_LIMIT 512M
-ENV PHP_UPLOAD_LIMIT 512M
 RUN set -ex; \
     \
     savedAptMark="$(apt-mark showmanual)"; \
     \
     apt-get -y update;\
-    #mkdir -p /usr/share/man/man1 && \
     apt-get install -y --no-install-recommends \
-    #apt-utils \
-    #curl \
     libmagickwand-dev \
     libgpgme11-dev \ 
     libyaml-dev \
@@ -34,12 +42,11 @@ RUN set -ex; \
     libkrb5-dev \
     libonig-dev \
     libzip-dev \
-    #wget \ 
     && \
-    pecl install imagick \
-    gnupg \
-    yaml && \
-    docker-php-ext-enable imagick gnupg yaml && \
+    pecl install imagick && \
+    pecl install gnupg && \
+    pecl install yaml && \
+    docker-php-ext-enable imagick gnupg yaml; \
     PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl && \
     docker-php-ext-install \
     curl \
@@ -63,16 +70,9 @@ RUN set -ex; \
         | xargs -rt apt-mark manual; \
     rm -r /tmp/pear; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-    rm -rf /var/lib/apt/lists/* && \
-    # rm -rf /var/lib/apt/lists/* && \
-    a2enmod rewrite headers ssl && \
-    rm -rf /usr/src/* 
-
-ARG USER_ID
-ARG GROUP_ID
-ARG USER_NAME
-
-RUN groupadd -f -g $GROUP_ID $USER_NAME && \
-useradd -u $USER_ID -g $GROUP_ID $USER_NAME
-
-USER ${USER_NAME}
+    rm -rf /var/lib/apt/lists/*; \
+    a2enmod rewrite headers ssl; \
+    rm -rf /usr/src/*; \
+    rm -rf /var/www/html/public_html/install.php; \
+    mv "$PHP_INI_DIR/php.ini-$PHPSTAGE" "$PHP_INI_DIR/php.ini" 
+ENTRYPOINT ["msehr.entrypoint"]

@@ -10,11 +10,3 @@
 !.vscode/extensions.json
 *.code-workspace
 /.env
-#/config/*
-/data/*
-/logs/*
-/ehr/*
-/config/cert/*
-db-data/*
-medshakeehr-data/*
-certs/*

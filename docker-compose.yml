@@ -3,50 +3,38 @@ version: '3.1'
 services:
   # https://hub.docker.com/_/mariadb
   db:
-    image: mariadb
+    image: mariadb:10.3
     restart: always
     volumes: 
-      - ./db-data:/var/lib/mysql
+      - db-data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    env_file:
+      - .env
     networks:
       - medshakeehr
 
   medshakeehr:
-    build: 
-      context: ./medshakeehr
-      args:
-        USER_ID: ${USER_ID}
-        GROUP_ID: ${GROUP_ID}
-        USER_NAME: ${USER_NAME}
+    image: medshakeehrdocker:dev
     restart: always
-    volumes:
-      - ./medshakeehr-data:/var/www/html
-      - ./medshakeehr/config/vhost:/etc/apache2/sites-enabled
-      - ./medshakeehr/config/php/php.ini:/usr/local/etc/php/php.ini
-
     environment:
-      VIRTUAL_HOST: "medshakeehr.localhost,www.medshakeehrlocalhost,mail.medshakeehr.localhost"
-      SELF_SIGNED_HOST: "medshakeehr.localhost"
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      SELF_SIGNED_HOST: ${VIRTUAL_HOST}
+      PHP_MEMORY_LIMIT: 512M
+      PHP_UPLOAD_LIMIT: 512M
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     depends_on:
       - db
     networks:
       - proxy
       - medshakeehr
-       
-  # https://hub.docker.com/_/composer
-  composer: 
-    image: composer
-    user: ${USER_ID}
-    command: bash -c "composer install --ignore-platform-reqs && cd public_html && composer install --ignore-platform-reqs"
-    restart: 'no'
-    volumes:
-      - ./medshakeehr-data:/var/www/html
-    working_dir: /var/www/html
-   
+
   # https://hub.docker.com/r/jwilder/nginx-proxy
   nginx-proxy:
     image: jwilder/nginx-proxy
@@ -55,45 +43,20 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certs:/etc/nginx/certs
+      - certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - proxy
       
   # https://hub.docker.com/r/sebastienheyd/self-signed-proxy-companion
-  proxy-companion:        
+  proxy-companion:
     restart: always
     image: sebastienheyd/self-signed-proxy-companion
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/nginx/certs
-    depends_on:
-      - nginx-proxy 
+      - certs:/etc/nginx/certs
 
-#   # https://hub.docker.com/_/phpmyadmin
-#   phpmyadmin:
-#     image: phpmyadmin/phpmyadmin
-#     links:
-#       - db
-#     environment:
-#       PMA_HOST: db
-#       PMA_PORT: 3306
-#       PMA_USER: root
-#       PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-#       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-#       MYSQL_USER: ${MYSQL_USER}
-#       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-#     depends_on: 
-#       - database
-#     ports:
-#       - 8080:80
-#     networks:
-#        - medshakeehr
-#     volumes: 
-#       - /sessions
-#       - ./medshakeehr/config/php/php.ini:/usr/local/etc/php/conf.d/php-phpmyadmin.ini
-
-#   # https://hub.docker.com/r/jodogne/orthanc    
+# # https://hub.docker.com/r/jodogne/orthanc    
 #   orthanc:
 #     image: jodogne/orthanc-plugins:1.9.7
 #     command: /run/secrets/  # Path to the configuration files (stored as secrets)
@@ -104,10 +67,14 @@ services:
 #       - orthanc.json
 #     environment:
 #       - ORTHANC_NAME=HelloWorld
-    
+      
 # secrets:
 #   orthanc.json:
 #     file: orthanc.json
+
+volumes:
+  db-data:
+  certs:
 
 networks:
   proxy:
