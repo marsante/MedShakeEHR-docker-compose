@@ -31,6 +31,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     depends_on:
       - db
+    # volumes: 
+    #   - medshakeehr:/var/www/html
     networks:
       - proxy
       - medshakeehr
@@ -75,6 +77,7 @@ services:
 volumes:
   db-data:
   certs:
+  # medshakeehr:
 
 networks:
   proxy:
