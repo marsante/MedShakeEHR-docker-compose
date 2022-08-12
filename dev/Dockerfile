@@ -9,13 +9,7 @@ COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/publi
 
 # https://hub.docker.com/_/php
 FROM php:8.0-apache
-ENV PHP_MEMORY_LIMIT 512M
-ENV PHP_UPLOAD_LIMIT 512M
-ENV PHPSTAGE development
-WORKDIR /var/www/html/
-COPY --from=build --chown=www-data:www-data /var/www/html ./
-COPY --chown=1000:1000 config/vhost-docker /etc/apache2/sites-enabled/000-default.conf
-COPY msehr.entrypoint /usr/local/bin/
+ENV PHPSTAGE production
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex; \
     \
@@ -73,6 +67,13 @@ RUN set -ex; \
     rm -rf /var/lib/apt/lists/*; \
     a2enmod rewrite headers ssl; \
     rm -rf /usr/src/*; \
-    rm -rf /var/www/html/public_html/install.php; \
-    mv "$PHP_INI_DIR/php.ini-$PHPSTAGE" "$PHP_INI_DIR/php.ini" 
-ENTRYPOINT ["msehr.entrypoint"]
+    mv "$PHP_INI_DIR/php.ini-$PHPSTAGE" "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' "$PHP_INI_DIR/php.ini" && \
+	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
+	sed -i 's/;max_input_vars = 1000/max_input_vars = 10000/' "$PHP_INI_DIR/php.ini"
+
+WORKDIR /var/www/html/
+COPY --from=build --chown=www-data:www-data /var/www/html ./
+COPY --chown=1000:1000 config/vhost-docker /etc/apache2/sites-available/000-default.conf
+COPY msehr.entrypoint /usr/local/bin/
+ENTRYPOINT ["msehr.entrypoint"] 
