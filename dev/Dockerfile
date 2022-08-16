@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/composer
-FROM composer:2.0 as build
+FROM composer:2.2 as build
 ENV VRELEASE master
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
 tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
