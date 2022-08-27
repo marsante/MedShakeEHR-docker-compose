@@ -1,14 +1,19 @@
 # https://hub.docker.com/_/composer
 FROM composer:2.2 as build
 ENV VRELEASE master
+RUN apk add icu-dev && \
+docker-php-ext-install bcmath \
+intl
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
 tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
 WORKDIR /var/www/html/
-RUN composer install -o --ignore-platform-req php && cd public_html && composer install -o
+RUN composer install -o --no-cache --ignore-platform-req php && \
+cd public_html && \
+composer install -o --no-cache
 COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
 
 # https://hub.docker.com/_/php
-FROM php:8.0-apache
+FROM php:8.1-apache
 ENV PHPSTAGE production
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex; \
@@ -28,21 +33,22 @@ RUN set -ex; \
     \
     apt-get -y update;\
     apt-get install -y --no-install-recommends \
-    libmagickwand-dev \
-    libgpgme11-dev \ 
-    libyaml-dev \
     libc-client-dev \
     libcurl4-openssl-dev \
+    libgpgme11-dev \
     libkrb5-dev \
+    libmagickwand-dev \
     libonig-dev \
+    libyaml-dev \
     libzip-dev \
     && \
-    pecl install imagick && \
     pecl install gnupg && \
+    pecl install imagick && \
     pecl install yaml && \
-    docker-php-ext-enable imagick gnupg yaml; \
+    docker-php-ext-enable gnupg imagick yaml; \
     PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl && \
     docker-php-ext-install \
+    bcmath \
     curl \
     dom \
     gd \

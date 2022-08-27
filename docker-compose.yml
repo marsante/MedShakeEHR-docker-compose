@@ -18,13 +18,11 @@ services:
       - medshakeehr
 
   medshakeehr:
-    build: ./7.1.1
+    build: ./dev
     restart: always
     environment:
       VIRTUAL_HOST: ${VIRTUAL_HOST}
       SELF_SIGNED_HOST: ${VIRTUAL_HOST}
-      PHP_MEMORY_LIMIT: 512M
-      PHP_UPLOAD_LIMIT: 512M
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
