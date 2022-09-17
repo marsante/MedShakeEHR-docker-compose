@@ -4,8 +4,9 @@ ENV VRELEASE v7.1.1
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
 tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
 WORKDIR /var/www/html/
-RUN composer install -o --no-cache && \
-cd public_html && composer install -o --no-cache
+RUN composer install -o --no-cache --ignore-platform-req php && \
+cd public_html && \
+composer install -o --no-cache
 COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
 
 # https://hub.docker.com/_/php
