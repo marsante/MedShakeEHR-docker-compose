@@ -20,6 +20,8 @@ services:
   medshakeehr:
     build: ./dev
     restart: always
+  # run as arbitrary user
+    # user: ${USER_ID}:${GROUP_ID}
     environment:
       VIRTUAL_HOST: ${VIRTUAL_HOST}
       SELF_SIGNED_HOST: ${VIRTUAL_HOST}
