@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/composer
-FROM composer:2.2 as build
+FROM composer:2.4 as build
 ENV VRELEASE master
 RUN apk add icu-dev && \
 docker-php-ext-install bcmath \
