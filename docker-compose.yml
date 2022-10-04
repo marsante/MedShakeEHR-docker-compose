@@ -18,7 +18,7 @@ services:
       - medshakeehr
 
   medshakeehr:
-    build: ./dev
+    build: ./7.2.0-RC
     restart: always
   # run as arbitrary user
     # user: ${USER_ID}:${GROUP_ID}
