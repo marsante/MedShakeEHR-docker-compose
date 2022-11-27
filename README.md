@@ -13,7 +13,7 @@ Pile LAMP pour MedshakeEHR en local :
 * Configurez .env selon vos besoins.
 
 ```bash
-cd MedShakeEHR-dockerCompose/
+cd MedShakeEHR-docker-compose/
 cp sample.env .env
 nano .env
 ```
