@@ -73,7 +73,9 @@ RUN composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-prog
 cd public_html && \
 composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o
 COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
-RUN chown -R www-data:www-data /var/www/html/
+RUN chown -R www-data:www-data /var/www/html/ \
+    # run as arbitrary user
+    && chmod -R u+rwX,go+wrX /var/www/html
 COPY --chown=1000:1000 config/vhost-docker /etc/apache2/sites-available/000-default.conf
 COPY msehr.entrypoint /usr/local/bin/
 ENTRYPOINT ["msehr.entrypoint"] 

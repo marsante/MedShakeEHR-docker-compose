@@ -3,12 +3,9 @@ version: '3.1'
 services:
   # https://hub.docker.com/_/mariadb
   db:
+    container_name: msehrdb
     image: mariadb:10.6
-    restart: always
-    volumes: 
-      - db-data:/var/lib/mysql
-      # If you would import old database
-      # - ./db-data:/docker-entrypoint-initdb.d
+    restart: unless-stopped
     environment:
       TZ: ${TZ}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -16,14 +13,19 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MARIADB_AUTO_UPGRADE: ${MARIADB_AUTO_UPGRADE}
+    volumes: 
+      - db-data:/var/lib/mysql
+      # If you would import old database
+      # - ./db-data:/docker-entrypoint-initdb.d
     networks:
       - medshakeehr
 
   medshakeehr:
+    container_name: msehr
     build: ./7.2.1
-    restart: always
+    restart: unless-stopped
   # run as arbitrary user
-    # user: ${USER_ID}:${GROUP_ID}
+    user: ${USER_ID}:${GROUP_ID}
     environment:
       TZ: ${TZ}
       VIRTUAL_HOST: ${VIRTUAL_HOST}
@@ -34,6 +36,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     depends_on:
       - db
+      - proxy-companion
     # volumes: 
     #   - medshakeehr:/var/www/html
     networks:
@@ -42,8 +45,9 @@ services:
 
   # https://hub.docker.com/r/jwilder/nginx-proxy
   nginx-proxy:
+    container_name: proxy
     image: jwilder/nginx-proxy
-    restart: always
+    restart: unless-stopped
     environment:
       TZ: ${TZ}
     ports:
@@ -57,14 +61,18 @@ services:
       
   # https://hub.docker.com/r/sebastienheyd/self-signed-proxy-companion
   proxy-companion:
-    restart: always
+    container_name: proxy-companion
     image: sebastienheyd/self-signed-proxy-companion
+    restart: unless-stopped
+    depends_on:
+      - nginx-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - certs:/etc/nginx/certs
 
 # # https://hub.docker.com/r/jodogne/orthanc    
 #   orthanc:
+#     container_name: msehrdicom
 #     image: jodogne/orthanc-plugins:1.9.7
 #     command: /run/secrets/  # Path to the configuration files (stored as secrets)
 #     ports:
@@ -86,4 +94,5 @@ volumes:
 
 networks:
   proxy:
+    external: true
   medshakeehr:
