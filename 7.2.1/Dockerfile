@@ -7,9 +7,9 @@ intl
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/refs/tags/"$VRELEASE".tar.gz && \
 tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
 WORKDIR /var/www/html/
-RUN composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress -o && \
+RUN composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o && \
 cd public_html && \
-composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress -o
+composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o
 COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
 
 # https://hub.docker.com/_/php
