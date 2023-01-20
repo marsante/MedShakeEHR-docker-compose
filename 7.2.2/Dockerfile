@@ -1,0 +1,81 @@
+# https://hub.docker.com/_/php
+FROM php:8.1-apache
+ENV VRELEASE v7.2.2
+ENV PHPSTAGE production
+ARG DEBIAN_FRONTEND=noninteractive
+RUN set -ex; \
+    \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ghostscript \
+        git \
+        imagemagick \
+        mariadb-client \
+        pdftk \
+    ; \
+    rm -rf /var/lib/apt/lists/*
+RUN set -ex; \
+    \
+    savedAptMark="$(apt-mark showmanual)"; \
+    \
+    apt-get -y update;\
+    apt-get install -y --no-install-recommends \
+    libc-client-dev \
+    libcurl4-openssl-dev \
+    libgpgme11-dev \
+    libkrb5-dev \
+    libmagickwand-dev \
+    libonig-dev \
+    libyaml-dev \
+    libzip-dev \
+    && \
+    pecl install gnupg && \
+    pecl install imagick && \
+    pecl install yaml && \
+    docker-php-ext-enable gnupg imagick yaml; \
+    PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl && \
+    docker-php-ext-install \
+    bcmath \
+    curl \
+    dom \
+    gd \
+    imap \
+    intl \
+    mbstring \
+    mysqli \
+    soap \
+    xml \
+    zip && \
+    apt-mark auto '.*' > /dev/null; \
+    apt-mark manual $savedAptMark; \
+    ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
+        | awk '/=>/ { print $3 }' \
+        | sort -u \
+        | xargs -r dpkg-query -S \
+        | cut -d: -f1 \
+        | sort -u \
+        | xargs -rt apt-mark manual; \
+    rm -r /tmp/pear; \
+    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+    rm -rf /var/lib/apt/lists/*; \
+    a2enmod rewrite headers ssl; \
+    rm -rf /usr/src/*; \
+    mv "$PHP_INI_DIR/php.ini-$PHPSTAGE" "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' "$PHP_INI_DIR/php.ini" && \
+	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
+	sed -i 's/;max_input_vars = 1000/max_input_vars = 10000/' "$PHP_INI_DIR/php.ini"
+
+RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
+tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
+COPY --from=composer:2.4 /usr/bin/composer /usr/local/bin/composer
+WORKDIR /var/www/html/
+RUN composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o && \
+cd public_html && \
+composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o
+COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
+RUN chown -R www-data:www-data /var/www/html/ \
+    # run as arbitrary user
+    && chmod -R u+rwX,go+wrX /var/www/html
+COPY --chown=1000:1000 config/vhost-docker /etc/apache2/sites-available/000-default.conf
+COPY msehr.entrypoint /usr/local/bin/
+ENTRYPOINT ["msehr.entrypoint"] 

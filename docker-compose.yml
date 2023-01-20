@@ -22,7 +22,7 @@ services:
 
   medshakeehr:
     container_name: msehr
-    build: ./7.2.1
+    build: ./7.2.2
     restart: unless-stopped
   # run as arbitrary user
     user: ${USER_ID}:${GROUP_ID}
