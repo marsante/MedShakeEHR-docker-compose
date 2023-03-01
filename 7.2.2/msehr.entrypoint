@@ -1,10 +1,16 @@
 #!/bin/bash
-if [ -e /var/www/html/config/config.yml ]
-then
-    echo "Configuration trouvée"
-    apache2-foreground
+set -e
 
-else
+if [ ! -e /var/www/html/public_html/index.php ]; then
+    echo "Copie de MedShakeEHR ..."
+    cp -pr /usr/src/medshakeehr/* /var/www/html/
+    cd /var/www/html && \
+    composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o && \
+    cd public_html && \
+    composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o
+fi
+
+if [ ! -e /var/www/html/config/config.yml ]; then
     echo "Configuration absente, création ..."
     echo "
 sqlRootId: ""
@@ -32,7 +38,6 @@ twigEnvironnementAutoescape: false
 twigDebug: false
 configForm: ""
         " > /var/www/html/config/config.yml
-chown www-data:www-data /var/www/html/config/config.yml
-apache2-foreground
-
 fi
+
+exec "$@"

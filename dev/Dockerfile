@@ -63,19 +63,16 @@ RUN set -ex; \
     mv "$PHP_INI_DIR/php.ini-$PHPSTAGE" "$PHP_INI_DIR/php.ini" && \
     sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
-	sed -i 's/;max_input_vars = 1000/max_input_vars = 10000/' "$PHP_INI_DIR/php.ini"
+	sed -i 's/;max_input_va*rs = 1000/max_input_vars = 20000/' "$PHP_INI_DIR/php.ini"
 
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
-tar -xf /tmp/msehr.tar.gz -C /var/www/html --strip-components=1
+mkdir /usr/src/medshakeehr && \
+tar -xf /tmp/msehr.tar.gz -C /usr/src/medshakeehr --strip-components=1 && \
+rm /tmp/msehr.tar.gz
+COPY config/MEDSHAKEEHRPATH-docker /usr/src/medshakeehr/public_html/MEDSHAKEEHRPATH
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
-WORKDIR /var/www/html/
-RUN composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o && \
-cd public_html && \
-composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o
-COPY --chown=www-data:www-data config/MEDSHAKEEHRPATH-docker /var/www/html/public_html/MEDSHAKEEHRPATH
-RUN chown -R www-data:www-data /var/www/html/ \
-    # run as arbitrary user
-    && chmod -R u+rwX,go+wrX /var/www/html
-COPY --chown=1000:1000 config/vhost-docker /etc/apache2/sites-available/000-default.conf
+VOLUME /var/www/html/
+COPY config/vhost-docker /etc/apache2/sites-available/000-default.conf
 COPY msehr.entrypoint /usr/local/bin/
 ENTRYPOINT ["msehr.entrypoint"] 
+CMD ["apache2-foreground"]
