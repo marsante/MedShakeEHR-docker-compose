@@ -22,10 +22,8 @@ services:
 
   medshakeehr:
     container_name: msehr
-    build: ./7.2.2
+    build: ./7.3.0
     restart: unless-stopped
-  # run as arbitrary user
-    user: ${USER_ID}:${GROUP_ID}
     environment:
       TZ: ${TZ}
       VIRTUAL_HOST: ${VIRTUAL_HOST}
@@ -56,6 +54,7 @@ services:
     volumes:
       - certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      # - /run/user/1000/docker.sock:/tmp/docker.sock:ro
     networks:
       - proxy
       
@@ -67,8 +66,9 @@ services:
     depends_on:
       - nginx-proxy
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - certs:/etc/nginx/certs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # - /run/user/1000/docker.sock:/var/run/docker.sock:ro
 
 # # https://hub.docker.com/r/jodogne/orthanc    
 #   orthanc:
