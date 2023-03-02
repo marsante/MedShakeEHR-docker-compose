@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+
+if [ ! -e /var/www/html/public_html/index.php ]; then
+    echo "Copie de MedShakeEHR ..."
+    cp -pr /usr/src/medshakeehr/* /var/www/html/
+    cd /var/www/html && \
+    composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o && \
+    cd public_html && \
+    composer install -n --no-plugins --no-scripts --no-cache --no-ansi --no-progress --no-dev -o
+fi
+
+if [ ! -e /var/www/html/config/config.yml ]; then
+    echo "Configuration absente, création ..."
+    echo "
+sqlRootId: ""
+sqlRootPwd: ""
+sqlNotCreatDb: true
+protocol: https://
+host: $VIRTUAL_HOST
+port: ""
+urlHostSuffixe: ""
+webDirectory: /var/www/html/public_html/
+stockageLocation: /var/www/html/stockage/
+backupLocation: /var/www/html/backups/
+workingDirectory: /var/www/html/public_html/workingDirectory/
+cookieDomain: $VIRTUAL_HOST
+cookieDuration: 31104000
+fingerprint: 03Akxqa66Yw
+sqlServeur: db
+sqlBase: $MYSQL_DATABASE
+sqlUser: $MYSQL_USER
+sqlPass: $MYSQL_PASSWORD
+sqlVarPassword: 3Hcha5n9Bs
+templatesFolder: /var/www/html/templates/
+twigEnvironnementCache: false
+twigEnvironnementAutoescape: false
+twigDebug: false
+configForm: ""
+        " > /var/www/html/config/config.yml
+fi
+
+exec "$@"
