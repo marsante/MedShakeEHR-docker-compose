@@ -40,4 +40,8 @@ configForm: ""
         " > /var/www/html/config/config.yml
 fi
 
+uid="$(id -u)"
+if [ "$uid" = 0 ]; then
+    chown -R www-data:www-data /var/www/html/
+fi
 exec "$@"
