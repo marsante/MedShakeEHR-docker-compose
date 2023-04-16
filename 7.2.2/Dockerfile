@@ -1,6 +1,5 @@
 # https://hub.docker.com/_/php
 FROM php:8.1-apache
-ENV VRELEASE v7.2.2
 ENV PHPSTAGE production
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex; \
@@ -67,6 +66,7 @@ RUN set -ex; \
 
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 COPY config/vhost-docker /etc/apache2/sites-available/000-default.conf
+ENV VRELEASE v7.2.2
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
 mkdir /usr/src/medshakeehr && \
 tar -xf /tmp/msehr.tar.gz -C /usr/src/medshakeehr --strip-components=1 && \

@@ -22,7 +22,8 @@ services:
 
   medshakeehr:
     container_name: msehr
-    build: ./7.3.0
+    image: marsante/msehrtest:7.3.1
+    # user: 1000:1000
     restart: unless-stopped
     environment:
       TZ: ${TZ}
@@ -39,8 +40,10 @@ services:
     depends_on:
       - db
       - proxy-companion
-    # volumes: 
-    #   - medshakeehr:/var/www/html
+    volumes: 
+      - medshakeehr:/var/www/html
+      # if you use bind volume with arbitrary user create first the folder with the good permissions
+      # - ./medshakeehr:/var/www/html
     networks:
       - proxy
       - medshakeehr
@@ -58,6 +61,7 @@ services:
     volumes:
       - certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      # rootless socket for user 1000
       # - /run/user/1000/docker.sock:/tmp/docker.sock:ro
     networks:
       - proxy
@@ -72,6 +76,7 @@ services:
     volumes:
       - certs:/etc/nginx/certs
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # rootless socket for user 1000
       # - /run/user/1000/docker.sock:/var/run/docker.sock:ro
 
 # # https://hub.docker.com/r/jodogne/orthanc    
@@ -94,7 +99,7 @@ services:
 volumes:
   db-data:
   certs:
-  # medshakeehr:
+  medshakeehr:
 
 networks:
   proxy:

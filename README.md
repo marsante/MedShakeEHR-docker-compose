@@ -17,13 +17,21 @@ cd MedShakeEHR-docker-compose/
 cp sample.env .env
 nano .env
 ```
-
-* Modifier l'image docker-compose avec le Dockerfile de votre choix. 
+* * Modifier l'image msehr de votre choix. 
 
 ```bash
 nano docker-compose.yml
 medshakeehr:
-    build: ./7.2.1
+    image: marsante/msehrtest:7.3.1
+
+```
+
+* Ou modifier l'image docker-compose avec le Dockerfile de votre choix. 
+
+```bash
+nano docker-compose.yml
+medshakeehr:
+    build: ./7.3.1
 
 ```
 
