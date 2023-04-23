@@ -1,38 +1,6 @@
 version: '3.1'
 
 services:
-  # https://hub.docker.com/_/mariadb
-  db:
-    container_name: msehrdb
-    image: mariadb:10.6
-    restart: unless-stopped
-    environment:
-      TZ: ${TZ}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MARIADB_AUTO_UPGRADE: ${MARIADB_AUTO_UPGRADE}
-    volumes: 
-      - db-data:/var/lib/mysql
-      # If you would import old database
-      # - ./db-data:/docker-entrypoint-initdb.d
-    networks:
-      - medshakeehr
-
-  # # https://hub.docker.com/_/phpmyadmin  
-  # phpmyadmin:
-  #     container_name: phpmyadmin
-  #     image: phpmyadmin
-  #     restart: unless-stopped
-  #     environment:
-  #       VIRTUAL_HOST: "pma.${VIRTUAL_HOST}"
-  #       SELF_SIGNED_HOST: "pma.${VIRTUAL_HOST}"
-  #       PMA_HOST: db
-  #     networks:
-  #       - proxy
-  #       - medshakeehr
-
   medshakeehr:
     container_name: msehr
     image: marsante/msehrtest:7.3.1
@@ -59,7 +27,51 @@ services:
       # - ./medshakeehr:/var/www/html
     networks:
       - proxy
-      - medshakeehr
+      - db
+      # - orthanc
+  
+  # https://hub.docker.com/_/mariadb
+  db:
+    container_name: msehrdb
+    image: mariadb:10.6
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_AUTO_UPGRADE: ${MARIADB_AUTO_UPGRADE}
+    volumes: 
+      - db-data:/var/lib/mysql
+      # If you would import old database
+      # - ./db-data:/docker-entrypoint-initdb.d
+    networks:
+      - db
+
+  # # https://hub.docker.com/_/phpmyadmin  
+  # phpmyadmin:
+  #     container_name: phpmyadmin
+  #     image: phpmyadmin
+  #     restart: unless-stopped
+  #     environment:
+  #       VIRTUAL_HOST: "pma.${VIRTUAL_HOST}"
+  #       SELF_SIGNED_HOST: "pma.${VIRTUAL_HOST}"
+  #       PMA_HOST: db
+  #     networks:
+  #       - proxy
+  #       - db
+
+  # # https://hub.docker.com/r/osimis/orthanc
+  # orthanc:
+  #   container_name: msehrdicom
+  #   image: osimis/orthanc
+  #   restart: unless-stopped
+  #   command: /run/secrets/  # Path to the configuration files (stored as secrets)
+  #   secrets:
+  #     - orthanc.json
+  #   networks:
+  #     - orthanc
 
   # https://hub.docker.com/r/jwilder/nginx-proxy
   nginx-proxy:
@@ -91,19 +103,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # rootless socket for user 1000
       # - /run/user/1000/docker.sock:/var/run/docker.sock:ro
-
-# # https://hub.docker.com/r/jodogne/orthanc    
-#   orthanc:
-#     container_name: msehrdicom
-#     image: jodogne/orthanc-plugins:1.9.7
-#     command: /run/secrets/  # Path to the configuration files (stored as secrets)
-#     ports:
-#       - 4242:4242
-#       - 8042:8042
-#     secrets:
-#       - orthanc.json
-#     environment:
-#       - ORTHANC_NAME=HelloWorld
 
   # # https://hub.docker.com/r/linuxserver/wireguard
   # wireguard:
@@ -145,4 +144,5 @@ volumes:
 networks:
   proxy:
     external: true
-  medshakeehr:
+  db:
+  # orthanc:
