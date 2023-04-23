@@ -3,7 +3,7 @@ version: '3.1'
 services:
   medshakeehr:
     container_name: msehr
-    image: marsante/msehrtest:7.3.1
+    image: marsante/msehrtest:7.3.2
     # user: ${USER_ID}:${GROUP_ID}
     restart: unless-stopped
     environment:
@@ -102,6 +102,20 @@ services:
       - certs:/etc/nginx/certs
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # rootless socket for user 1000
+      # - /run/user/1000/docker.sock:/var/run/docker.sock:ro
+
+  # https://hub.docker.com/r/containrrr/watchtower
+  watchtower:
+    image: containrrr/watchtower 
+    container_name: watchtower
+    restart: unless-stopped
+    environment:
+      TZ: $TZ 
+      WATCHTOWER_SCHEDULE: ${WATCHTOWER_SCHEDULE}
+      WATCHTOWER_ROLLING_RESTART: ${WATCHTOWER_ROLLING_RESTART}
+      WATCHTOWER_CLEANUP: ${WATCHTOWER_CLEANUP}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       # - /run/user/1000/docker.sock:/var/run/docker.sock:ro
 
   # # https://hub.docker.com/r/linuxserver/wireguard
