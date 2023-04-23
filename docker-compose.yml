@@ -20,6 +20,19 @@ services:
     networks:
       - medshakeehr
 
+  # https://hub.docker.com/_/phpmyadmin  
+  # phpmyadmin:
+  #     container_name: phpmyadmin
+  #     image: phpmyadmin
+  #     restart: unless-stopped
+  #     environment:
+  #       VIRTUAL_HOST: "pma.${VIRTUAL_HOST}"
+  #       SELF_SIGNED_HOST: "pma.${VIRTUAL_HOST}"
+  #       PMA_HOST: db
+  #     networks:
+  #       - proxy
+  #       - medshakeehr
+
   medshakeehr:
     container_name: msehr
     image: marsante/msehrtest:7.3.1
