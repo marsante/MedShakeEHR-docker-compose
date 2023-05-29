@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/php
-FROM php:8.2-apache
+FROM php:8.1-apache
 ENV PHPSTAGE production
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex; \
@@ -41,7 +41,7 @@ RUN set -ex; \
     imap \
     intl \
     mbstring \
-    mysqli \
+    pdo_mysql \
     soap \
     xml \
     zip && \
@@ -64,7 +64,7 @@ RUN set -ex; \
 	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/;max_input_vars = 1000/max_input_vars = 20000/' "$PHP_INI_DIR/php.ini"
 
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer:2.2 /usr/bin/composer /usr/local/bin/composer
 COPY config/vhost-docker /etc/apache2/sites-available/000-default.conf
 ENV VRELEASE master
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
