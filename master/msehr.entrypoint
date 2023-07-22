@@ -12,6 +12,25 @@ fi
 
 if [ ! -e /var/www/html/config/config.yml ]; then
     echo "Configuration absente, création ..."
+
+    generate_random_string() {
+  openssl rand -base64 12
+    }
+
+    set_default_value() {
+    if [ -z "$1" ]; then
+        echo "$2"
+    else
+        echo "$1"
+    fi
+    }
+
+    FINGERPRINT=$(set_default_value "$FINGERPRINT" "$(generate_random_string)")
+    SQLVARPSWD=$(set_default_value "$SQLVARPSWD" "$(generate_random_string)")
+    PROTO=$(set_default_value "$PROTO" "https")
+    PORT=$(set_default_value "$PORT" "")
+    COOKIED=$(set_default_value "$COOKIED" "31104000")
+
     echo "
 sqlRootId: ""
 sqlRootPwd: ""
