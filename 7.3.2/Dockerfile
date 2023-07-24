@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/php
-FROM php:8.1-apache-bullseye
+FROM php:8.1-apache
 ENV PHPSTAGE production
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex; \
@@ -10,7 +10,7 @@ RUN set -ex; \
         git \
         imagemagick \
         mariadb-client \
-        pdftk \
+        pdftk-java \
     ; \
     rm -rf /var/lib/apt/lists/*
 RUN set -ex; \
@@ -48,7 +48,7 @@ RUN set -ex; \
     apt-mark auto '.*' > /dev/null; \
     apt-mark manual $savedAptMark; \
     ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
-        | awk '/=>/ { print $3 }' \
+        | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \        | sort -u \
         | sort -u \
         | xargs -r dpkg-query -S \
         | cut -d: -f1 \
