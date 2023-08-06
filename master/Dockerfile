@@ -48,7 +48,8 @@ RUN set -ex; \
     apt-mark auto '.*' > /dev/null; \
     apt-mark manual $savedAptMark; \
     ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
-        | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \        | sort -u \
+        | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
+        | sort -u \
         | sort -u \
         | xargs -r dpkg-query -S \
         | cut -d: -f1 \
@@ -74,5 +75,6 @@ rm /tmp/msehr.tar.gz
 COPY config/MEDSHAKEEHRPATH-docker /usr/src/medshakeehr/public_html/MEDSHAKEEHRPATH
 VOLUME /var/www/html/
 COPY msehr.entrypoint /usr/local/bin/
+COPY config/msehr.upgrade.php /usr/local/bin/
 ENTRYPOINT ["msehr.entrypoint"] 
 CMD ["apache2-foreground"]

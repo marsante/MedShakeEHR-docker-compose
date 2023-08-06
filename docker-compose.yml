@@ -3,7 +3,7 @@ version: '3.1'
 services:
   medshakeehr:
     container_name: msehr
-    image: marsante/msehrtest:8.0.1
+    image: marsante/msehrtest:8.0.2
     # user: ${USER_ID}:${GROUP_ID}
     restart: unless-stopped
     environment:
