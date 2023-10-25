@@ -52,7 +52,7 @@ Le projet actuel propose par défaut une persistance de la base de donnée, mais
 * Relancez la stack docker compose comme vu précédemment.
 
 ## phpMyAdmin
-* Décommentez la stack puis rendez-vous sur [pma.msehr.localhost/install.php](pma.msehr.localhost/install.php)
+* Décommentez la stack puis rendez-vous sur [pma.msehr.localhost/](pma.msehr.localhost/)
 
 ## VPN (Wireguard)
 * Décommentez le service, modifiez le .env en personnalisant avec vos données réseaux / domaine.
