@@ -32,6 +32,7 @@ if [ ! -e /var/www/html/config/config.yml ]; then
     COOKIED=$(set_default_value "$COOKIED" "31104000")
 
     echo "
+---    
 sqlRootId: ""
 sqlRootPwd: ""
 sqlNotCreatDb: true
@@ -56,6 +57,7 @@ twigEnvironnementCache: false
 twigEnvironnementAutoescape: false
 twigDebug: false
 configForm: ""
+...
         " > /var/www/html/config/config.yml
 fi
 

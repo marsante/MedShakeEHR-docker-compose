@@ -64,9 +64,9 @@ RUN set -ex; \
 	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/;max_input_vars = 1000/max_input_vars = 20000/' "$PHP_INI_DIR/php.ini"
 
-COPY --from=composer:2.5 /usr/bin/composer /usr/local/bin/composer
+COPY --from=docker.io/composer:2.5 /usr/bin/composer /usr/local/bin/composer
 COPY config/vhost-docker /etc/apache2/sites-available/000-default.conf
-ENV VRELEASE v8.0.3
+ENV VRELEASE v8.0.5
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
 mkdir /usr/src/medshakeehr && \
 tar -xf /tmp/msehr.tar.gz -C /usr/src/medshakeehr --strip-components=1 && \
@@ -74,5 +74,6 @@ rm /tmp/msehr.tar.gz
 COPY config/MEDSHAKEEHRPATH-docker /usr/src/medshakeehr/public_html/MEDSHAKEEHRPATH
 VOLUME /var/www/html/
 COPY msehr.entrypoint /usr/local/bin/
+COPY msehr.upgrade.php /usr/local/bin/
 ENTRYPOINT ["msehr.entrypoint"] 
 CMD ["apache2-foreground"]

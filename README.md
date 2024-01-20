@@ -25,7 +25,7 @@ nano .env
 ```bash
 nano docker-compose.yml
 medshakeehr:
-    image: marsante/msehrtest:7.3.1
+    image: marsante/msehrtest:8.0.6
 
 ```
 
@@ -39,12 +39,18 @@ medshakeehr:
 ```
 
 * Vous pouvez aussi modifier le Dockerfile avec votre clone de MedShakeEHR pour tester vos nouvelles fonctionnalités.
-* Créez le réseau externe proxy ```docker network create proxy``` ou ```docker network create proxy``` suivant votre configuration.
 * Puis lancez le docker-compose ```sudo docker-compose up --build -d``` ou ```docker-compose up --build -d``` ou ```sudo docker compose up --build -d``` ou ```docker compose up --build -d``` suivant votre configuration.
 * Tapez [msehr.localhost/install.php](msehr.localhost/install.php) dans votre navigateur.
 * Suivez les instructions.
 
-Le projet actuel propose par défaut une persistance de la base de donnée, mais pas de l'installation des modules (il faudra glisser à nouveau le zip à chaque redémarrage du conteneur) et des fichiers personnalisés. Il faudra adapter les volumes que vous souhaitez conserver (les mettre à jour par les zips) et les volumes que vous voulez mettre à jour par le conteneur docker.
+* Pour ajouter un module, ou le mettre à jour :
+
+```bash
+docker exec -ti msehr php /usr/local/bin/msehr.upgrade.php base
+```
+
+* les arguments disponibles sont :  base, chiro, gyneco, general, thermal, mpr, osteo
+
 
 ## Orthanc
 * Décommentez le network orthanc (en global et dans le service msehr) et le service orthanc
