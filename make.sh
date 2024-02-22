@@ -1,5 +1,5 @@
 #!/bin/bash
-msehrVersion=8.1.0
+msehrVersion=8.1.1
 cd $msehrVersion
 buildah build -f Dockerfile -t marsante/msehrtest:$msehrVersion -t marsante/msehrtest:latest
 buildah push marsante/msehrtest:$msehrVersion docker://marsante/msehrtest:$msehrVersion
