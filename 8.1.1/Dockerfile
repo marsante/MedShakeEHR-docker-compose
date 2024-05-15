@@ -20,40 +20,51 @@ RUN set -ex; \
     apt-get -y update;\
     apt-get install -y --no-install-recommends \
     libc-client-dev \
-    libcurl4-openssl-dev \
     libgpgme11-dev \
     libkrb5-dev \
     libmagickwand-dev \
-    libonig-dev \
     libyaml-dev \
     libzip-dev \
+    ; \
+    pecl install gnupg \
     && \
-    pecl install gnupg && \
-    pecl install imagick && \
-    pecl install yaml && \
-    docker-php-ext-enable gnupg imagick yaml; \
-    PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl && \
+    pecl install imagick \
+    && \
+    pecl install yaml \
+    && \
+    docker-php-ext-enable gnupg imagick yaml \
+    ; \
+    PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+    ; \
+    docker-php-ext-configure gd \
+		--with-freetype \
+		--with-jpeg \
+    ; \
     docker-php-ext-install \
     bcmath \
-    curl \
-    dom \
     gd \
     imap \
     intl \
-    mbstring \
     pdo_mysql \
     soap \
-    xml \
-    zip && \
+    zip \
+    && \
+    out="$(php -r 'exit(0);')"; \
+	[ -z "$out" ]; \
+	err="$(php -r 'exit(0);' 3>&1 1>&2 2>&3)"; \
+	[ -z "$err" ]; \
+	\
+	extDir="$(php -r 'echo ini_get("extension_dir");')"; \
+	[ -d "$extDir" ]; \
     apt-mark auto '.*' > /dev/null; \
-    apt-mark manual $savedAptMark; \
-    ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
-        | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
-        | sort -u \
-        | xargs -r dpkg-query -S \
-        | cut -d: -f1 \
-        | sort -u \
-        | xargs -rt apt-mark manual; \
+	apt-mark manual $savedAptMark; \
+	ldd "$extDir"/*.so \
+		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
+		| sort -u \
+		| xargs -r dpkg-query --search \
+		| cut -d: -f1 \
+		| sort -u \
+		| xargs -rt apt-mark manual; \
     rm -r /tmp/pear; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/*; \
@@ -63,7 +74,6 @@ RUN set -ex; \
     sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/;max_input_vars = 1000/max_input_vars = 20000/' "$PHP_INI_DIR/php.ini"
-
 COPY --from=docker.io/composer:2.5 /usr/bin/composer /usr/local/bin/composer
 COPY config/vhost-docker /etc/apache2/sites-available/000-default.conf
 ENV VRELEASE v8.1.1
