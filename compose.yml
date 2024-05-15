@@ -1,9 +1,10 @@
-version: '3.1'
-
 services:
   medshakeehr:
-    container_name: msehr
-    image: marsante/msehrtest:8.1.1
+    image: marsante/msehr:8.1.1
+    # build: 
+    #   context: ./8.1.1
+    #   tags:
+    #     - "marsante/msehr:8.1.1"
     # user: ${USER_ID}:${GROUP_ID}
     restart: unless-stopped
     environment:
@@ -28,11 +29,10 @@ services:
     networks:
       - proxy
       - db
-      # - orthanc
+      - dicom
   
   # https://hub.docker.com/_/mariadb
   db:
-    container_name: msehrdb
     image: mariadb:10.11
     restart: unless-stopped
     environment:
@@ -49,33 +49,37 @@ services:
     networks:
       - db
 
-  # # https://hub.docker.com/_/phpmyadmin  
-  # phpmyadmin:
-  #     container_name: phpmyadmin
-  #     image: phpmyadmin
-  #     restart: unless-stopped
-  #     environment:
-  #       VIRTUAL_HOST: "pma.${VIRTUAL_HOST}"
-  #       SELF_SIGNED_HOST: "pma.${VIRTUAL_HOST}"
-  #       PMA_HOST: db
-  #     networks:
-  #       - proxy
-  #       - db
+  # https://hub.docker.com/_/phpmyadmin  
+  phpmyadmin:
+    image: phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - db
+      - proxy-companion
+    environment:
+      VIRTUAL_HOST: "pma.${VIRTUAL_HOST}"
+      SELF_SIGNED_HOST: "pma.${VIRTUAL_HOST}"
+      PMA_HOST: db
+    networks:
+      - proxy
+      - db
+    profiles:
+      - debug
 
-  # # https://hub.docker.com/r/osimis/orthanc
-  # orthanc:
-  #   container_name: msehrdicom
-  #   image: osimis/orthanc
-  #   restart: unless-stopped
-  #   command: /run/secrets/  # Path to the configuration files (stored as secrets)
-  #   secrets:
-  #     - orthanc.json
-  #   networks:
-  #     - orthanc
+  # https://hub.docker.com/r/osimis/orthanc
+  dicom:
+    image: orthancteam/orthanc
+    restart: unless-stopped
+    command: /run/secrets/  # Path to the configuration files (stored as secrets)
+    secrets:
+      - orthanc.json
+    networks:
+      - dicom
+    profiles:
+      - dicom
 
   # https://hub.docker.com/r/jwilder/nginx-proxy
   nginx-proxy:
-    container_name: proxy
     image: nginxproxy/nginx-proxy:alpine
     restart: unless-stopped
     environment:
@@ -93,7 +97,6 @@ services:
       
   # https://hub.docker.com/r/sebastienheyd/self-signed-proxy-companion
   proxy-companion:
-    container_name: proxy-companion
     image: sebastienheyd/self-signed-proxy-companion
     restart: unless-stopped
     depends_on:
@@ -107,11 +110,10 @@ services:
   # https://hub.docker.com/r/containrrr/watchtower
   watchtower:
     image: containrrr/watchtower 
-    container_name: watchtower
     restart: unless-stopped
     environment:
       TZ: $TZ 
-      WATCHTOWER_SCHEDULE: ${WATCHTOWER_SCHEDULE}
+      # WATCHTOWER_SCHEDULE: ${WATCHTOWER_SCHEDULE}
       WATCHTOWER_ROLLING_RESTART: ${WATCHTOWER_ROLLING_RESTART}
       WATCHTOWER_CLEANUP: ${WATCHTOWER_CLEANUP}
     volumes:
@@ -119,36 +121,39 @@ services:
       # - /run/user/1000/docker.sock:/var/run/docker.sock:ro
 
   # # https://hub.docker.com/r/linuxserver/wireguard
-  # wireguard:
-  #   image: lscr.io/linuxserver/wireguard:latest
-  #   container_name: wireguard
-  #   cap_add:
-  #     - NET_ADMIN
-  #     - SYS_MODULE
-  #   environment:
-  #     PUID: ${USER_ID}
-  #     PGID: ${GROUP_ID}
-  #     TZ: ${TZ}
-  #     SERVERURL: #optional, public domain or IP
-  #     SERVERPORT: 51820 #optional
-  #     PEERS: 1 #optional
-  #     PEERDNS: auto #optional
-  #     INTERNAL_SUBNET: ${INTERNAL_SUBNET}  #optional
-  #     ALLOWEDIPS: 0.0.0.0/0 #optional
-  #     PERSISTENTKEEPALIVE_PEERS: #optional
-  #     LOG_CONFS: true #optional
-  #   volumes:
-  #     - /path/to/appdata/config:/config
-  #     - /lib/modules:/lib/modules #optional
-  #   ports:
-  #     - 51820:51820/udp
-  #   sysctls:
-  #     - net.ipv4.conf.all.src_valid_mark=1
-  #   restart: unless-stopped
+  vpn:
+    image: lscr.io/linuxserver/wireguard:latest
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+      TZ: ${TZ}
+      SERVERURL: #optional, public domain or IP
+      SERVERPORT: 51820 #optional
+      PEERS: 1 #optional
+      PEERDNS: auto #optional
+      INTERNAL_SUBNET: ${INTERNAL_SUBNET}  #optional
+      ALLOWEDIPS: 0.0.0.0/0 #optional
+      PERSISTENTKEEPALIVE_PEERS: #optional
+      LOG_CONFS: true #optional
+    volumes:
+      - ${VPN_CONFIG_PATH}:/config
+      - /lib/modules:/lib/modules #optional
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+    networks:
+      - proxy
+    profiles:
+      - vpn
 
-# secrets:
-#   orthanc.json:
-#     file: orthanc.json
+secrets:
+  orthanc.json:
+    file: orthanc.json
 
 volumes:
   db-data:
@@ -159,4 +164,4 @@ networks:
   proxy:
     name: proxy
   db:
-  # orthanc:
+  dicom:
