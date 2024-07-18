@@ -1,11 +1,12 @@
 # https://hub.docker.com/_/php
 FROM php:8.2-apache
-ENV PHPSTAGE production
+ENV PHPSTAGE=production
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex; \
     \
     apt-get update; \
     apt-get install -y --no-install-recommends \
+        cron \
         ghostscript \
         git \
         imagemagick \
@@ -49,34 +50,42 @@ RUN set -ex; \
     soap \
     zip \
     && \
+    # some misbehaving extensions end up outputting to stdout 🙈 (https://github.com/docker-library/wordpress/issues/669#issuecomment-993945967)
     out="$(php -r 'exit(0);')"; \
-	[ -z "$out" ]; \
-	err="$(php -r 'exit(0);' 3>&1 1>&2 2>&3)"; \
-	[ -z "$err" ]; \
-	\
-	extDir="$(php -r 'echo ini_get("extension_dir");')"; \
-	[ -d "$extDir" ]; \
+    [ -z "$out" ]; \
+    err="$(php -r 'exit(0);' 3>&1 1>&2 2>&3)"; \
+    [ -z "$err" ]; \
+    \
+    extDir="$(php -r 'echo ini_get("extension_dir");')"; \
+    [ -d "$extDir" ]; \
+    # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
     apt-mark auto '.*' > /dev/null; \
-	apt-mark manual $savedAptMark; \
-	ldd "$extDir"/*.so \
-		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
-		| sort -u \
-		| xargs -r dpkg-query --search \
-		| cut -d: -f1 \
-		| sort -u \
-		| xargs -rt apt-mark manual; \
-    rm -r /tmp/pear; \
+    apt-mark manual $savedAptMark; \
+    ldd "$extDir"/*.so \
+        | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
+        | sort -u \
+        | xargs -r dpkg-query --search \
+        | cut -d: -f1 \
+        | sort -u \
+        | xargs -rt apt-mark manual; \
+    \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/*; \
+    \
+    ! { ldd "$extDir"/*.so | grep 'not found'; }; \
+    # check for output like "PHP Warning:  PHP Startup: Unable to load dynamic library 'foo' (tried: ...)
+    err="$(php --version 3>&1 1>&2 2>&3)"; \
+    [ -z "$err" ]; \
+    rm -r /tmp/pear; \
     a2enmod rewrite headers ssl; \
-    rm -rf /usr/src/*; \
     mv "$PHP_INI_DIR/php.ini-$PHPSTAGE" "$PHP_INI_DIR/php.ini" && \
     sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini" && \
 	sed -i 's/;max_input_vars = 1000/max_input_vars = 20000/' "$PHP_INI_DIR/php.ini"
+
 COPY --from=docker.io/composer:2.5 /usr/bin/composer /usr/local/bin/composer
 COPY config/vhost-docker /etc/apache2/sites-available/000-default.conf
-ENV VRELEASE v8.1.1
+ENV VRELEASE=v8.1.1
 RUN curl -fsSL -o /tmp/msehr.tar.gz https://github.com/MedShake/MedShakeEHR-base/archive/"$VRELEASE".tar.gz && \
 mkdir /usr/src/medshakeehr && \
 tar -xf /tmp/msehr.tar.gz -C /usr/src/medshakeehr --strip-components=1 && \
